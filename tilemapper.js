@@ -194,8 +194,12 @@ function findBox(mouseX,mouseY) {
 };
 
 var rect = looker.getBoundingClientRect();
-looker.addEventListener("mousedown",function(e) {
+
+window.addEventListener("resize",function(e) {
   rect = looker.getBoundingClientRect();
+});
+
+looker.addEventListener("mousedown",function(e) {
   mouseX = (e.clientX - rect.left);
   mouseY = (e.clientY - rect.top);
   findBox(mouseX,mouseY);
