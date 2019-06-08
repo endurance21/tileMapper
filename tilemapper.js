@@ -155,9 +155,6 @@ var indexX = 0;
 var indexY = 0;
 var drawing = false;
 
-function eraser() {
-  erasing = true;
-}
 
 function draw(indexX,indexY) {
   ctx1.clearRect( indexX*LENGHT, indexY*HEIGHT, LENGHT, HEIGHT);
@@ -165,10 +162,23 @@ function draw(indexX,indexY) {
   layersData[currentDataIndex].layerArray[indexX][indexY] = Sprites.indexOf(currentSprite);
 };
 
+function eraser() {
+  erasing = true;
+}
+
 function erase(indexX,indexY) {
   //console.log("indexX="+indexX + "," + "indexY=" + indexY);
   ctx1.clearRect( indexX*LENGHT, indexY*HEIGHT, LENGHT, HEIGHT);
   layersData[currentDataIndex].layerArray[indexX][indexY] = 0;
+};
+
+function eraserAll() {
+  ctx1.clearRect( 0, 0, currentCanvas.width, currentCanvas.height);
+  for (var i = 0; i < layersData[currentDataIndex].layerArray.length; i++) {
+    for (var j = 0; j < layersData[currentDataIndex].layerArray[i].length; j++) {
+      layersData[currentDataIndex].layerArray[i][j] = 0
+    }
+  }
 };
 
 function findBox(mouseX,mouseY) {
