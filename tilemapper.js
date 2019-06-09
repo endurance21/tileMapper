@@ -242,11 +242,15 @@ function dataOut() {
 function displayLooker() {
   looker.style.display = "block";
   document.getElementById("eraser").style.display = "flex";
+  document.getElementById("eraserAll").style.display = "flex";
   document.getElementById("edit").style.display = "none";
+  document.getElementById("preview").style.display = "flex";
 };
 
 function hideLooker() {
   looker.style.display = "none";
   document.getElementById("edit").style.display = "flex";
   document.getElementById("eraser").style.display = "none";
+  document.getElementById("eraserAll").style.display = "none";
+  document.getElementById("preview").style.display = "none";
 };
