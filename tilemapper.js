@@ -15,6 +15,10 @@ treeSmall.setAttribute("class","object");
 
 const Sprites = [null,dirt,grass,sand,treeLarge,treeSmall];
 
+var noOfCanvas = 0;
+var rows = 0;
+var cols = 0;
+
 for (var i = 1; i < Sprites.length; i++) {
   Sprites[i].addEventListener("click",function () {
     currentSprite = this;
@@ -47,11 +51,14 @@ function canvasMaker(canvasName) {
   canvas.width = 800;
   canvas.height = 600;
   document.getElementById("canvas-container").appendChild(canvas);
+  noOfCanvas++;
 
-  var layerName = new Array (32);
-  for (var i = 0; i < layerName.length; i++) {
-    layerName[i] = new Array (24);
-    for (var j = 0; j < layerName[i].length; j++) {
+  console.log(cols+","+rows);
+
+  var layerName = [];
+  for (var i = 0; i < cols; i++) {
+    layerName[i] = [];
+    for (var j = 0; j < rows; j++) {
       layerName[i][j] = 0;
     }
   }
@@ -60,6 +67,8 @@ function canvasMaker(canvasName) {
     name : canvasName,
     zIndex : canvasCounter,
     layerArray : layerName,
+    offSetX : 0,
+    offSetY : 0,
   }
 
   layersData.push(data);
@@ -80,7 +89,7 @@ function canvasMaker(canvasName) {
     currentLayer = this;
     currentLayer.className = "selected";
     var innerBoxId = currentLayer.id;
-    var reqId = innerBoxId.substr(9,innerBoxId.lenght);
+    var reqId = innerBoxId.substr(9,innerBoxId.length);
     currentCanvas = document.getElementById("canvas-"+ reqId);
     currentDataIndex = currentCanvas.getAttribute("data-index");
     ctx1 = currentCanvas.getContext("2d");
@@ -103,7 +112,7 @@ function ordering() {
   var canvases = document.getElementsByClassName("canvases");
   var boxes = document.getElementsByClassName("box");
   var buttonId = event.srcElement.id;
-  var Id = buttonId.substr(7,buttonId.lenght);
+  var Id = buttonId.substr(7,buttonId.length);
   var currentBox = document.getElementById(Id);
   for (var i = 0; i < boxes.length; i++) {
     if(boxes[i].style.order >= order && boxes[i].style.order < currentBox.style.order){
@@ -121,33 +130,127 @@ function ordering() {
 
 function info() {
   var canvasName = prompt("enter the layer name","world");
+  if(noOfCanvas == 0){
+    cols = prompt("enter the no of columns");
+    rows = prompt("enter the no of rows");
+  }
   canvasMaker(canvasName);
+  var canvas = document.getElementById('canvas-'+canvasName);
+  var ctx = canvas.getContext("2d");
 };
 
 var looker = document.getElementById("looker");
 var ctx = looker.getContext("2d");
-const LENGHT = 25;
+const LENGTH = 25;
 const HEIGHT = 25;
 
-function drawGrid(row, col) {
+function drawGrid(row, col, ctx) {
   var x = 0 ;
   var y = 0 ;
   var col = col ;
   var row = row ;
-  let width = LENGHT ;
-  let lenght = HEIGHT ;
-  ctx.strokeRect( x, y, col*LENGHT , row*HEIGHT);
+  let width = LENGTH ;
+  let length = HEIGHT ;
+  ctx.strokeRect( x, y, col*LENGTH , row*HEIGHT);
   for (var i = 0; i < row; i++) {
     for (var j = 0; j < col; j++) {
-      ctx.strokeRect( x, y, LENGHT , HEIGHT);
-      x = x + LENGHT;
+      ctx.strokeRect( x, y, LENGTH , HEIGHT);
+      x = x + LENGTH;
     }
     x = 0;
     y = y + HEIGHT;
   }
 };
 
-drawGrid(24,32);
+drawGrid(24,32,ctx);
+
+
+
+
+var vertical = 0;
+var horizontal = 0;
+var moving = false;
+
+function moveCanvas(vertical,horizontal,moving) {
+  var prevOffSetX = layersData[currentDataIndex].offSetX;
+  var prevOffSetY = layersData[currentDataIndex].offSetY;
+  layersData[currentDataIndex].offSetX = layersData[currentDataIndex].offSetX + horizontal;
+  layersData[currentDataIndex].offSetY = layersData[currentDataIndex].offSetY + vertical;
+  var offSetXMax = (cols - 32) * 25 ;
+  var offSetYMax = (rows - 24) * 25 ;
+
+  if (layersData[currentDataIndex].offSetX < 0 || layersData[currentDataIndex].offSetX > offSetXMax) {
+    layersData[currentDataIndex].offSetX = prevOffSetX;
+  }
+
+  if (layersData[currentDataIndex].offSetY < 0 || layersData[currentDataIndex].offSetY > offSetYMax) {
+    layersData[currentDataIndex].offSetY = prevOffSetY;
+  }
+
+  draw();
+}
+
+
+function handleKeyDown(e) {
+  var canvases = document.getElementsByClassName("canvases");
+  console.log(canvases.length);
+  if(noOfCanvas){
+    switch(e.code){
+        case 'KeyW': case 'ArrowUp' :
+            console.log("hey");
+            vertical = -HEIGHT;
+            moving = true;
+            break;
+        case 'KeyA': case 'ArrowLeft' :
+            horizontal = -LENGTH;
+            moving = true;
+            break;
+        case 'KeyS': case 'ArrowDown' :
+            vertical = HEIGHT;
+            moving = true;
+            break;
+        case 'KeyD': case 'ArrowRight' :
+            horizontal = LENGTH;
+            moving = true;
+            break;
+    }
+    moveCanvas(vertical,horizontal,moving);
+  }
+}
+
+function handleKeyUp(e) {
+  var canvases = document.getElementsByClassName("canvases");
+  if(canvases.length){
+    switch(e.code){
+      case 'KeyW': case 'ArrowUp' :
+          vertical = 0;
+          moving = false;
+          break;
+      case 'KeyA': case 'ArrowLeft' :
+          horizontal = 0;
+          moving = false;
+          break;
+      case 'KeyS': case 'ArrowDown' :
+          vertical = 0;
+          moving = false;
+          break;
+      case 'KeyD': case 'ArrowRight' :
+          horizontal = 0;
+          moving = false;
+          break;
+    }
+  }
+}
+
+
+
+
+window.addEventListener("keydown", handleKeyDown);
+window.addEventListener("keyup", handleKeyUp);
+
+
+
+
 
 var mouseX = 0;
 var mouseY = 0;
@@ -155,38 +258,63 @@ var indexX = 0;
 var indexY = 0;
 var drawing = false;
 
-
-function draw(indexX,indexY) {
-  ctx1.clearRect( indexX*LENGHT, indexY*HEIGHT, LENGHT, HEIGHT);
-  ctx1.drawImage( currentSprite , indexX*LENGHT, indexY*HEIGHT, LENGHT, HEIGHT);
-  layersData[currentDataIndex].layerArray[indexX][indexY] = Sprites.indexOf(currentSprite);
-};
-
 function eraser() {
   erasing = true;
 }
 
+function update(indexX,indexY) {
+  layersData[currentDataIndex].layerArray[indexX + (layersData[currentDataIndex].offSetX/LENGTH)][indexY + (layersData[currentDataIndex].offSetY/HEIGHT)] = Sprites.indexOf(currentSprite);
+  draw();
+}
+
+function draw() {
+//ctx1.clearRect( indexX*LENGTH, indexY*HEIGHT, LENGTH, HEIGHT);
+//ctx1.drawImage( currentSprite , indexX*LENGTH, indexY*HEIGHT, LENGTH, HEIGHT);
+//  layersData[currentDataIndex].layerArray[indexX][indexY] = Sprites.indexOf(currentSprite);
+//console.log(layersData[currentDataIndex].offSetY);
+var startCol = layersData[currentDataIndex].offSetX/LENGTH;
+var startRow = layersData[currentDataIndex].offSetY/HEIGHT;
+var endCol = startCol + 32;
+var endRow = startRow + 24;
+
+for (var i = startCol; i <= endCol; i++) {
+  for (var j = startRow; j <= endRow; j++) {
+    var x = i - (layersData[currentDataIndex].offSetX/LENGTH);
+    var y = j - (layersData[currentDataIndex].offSetY/HEIGHT);
+    if(layersData[currentDataIndex].layerArray[i][j]){
+      ctx1.clearRect( x*LENGTH, y*HEIGHT, LENGTH, HEIGHT);
+      ctx1.drawImage( Sprites[layersData[currentDataIndex].layerArray[i][j]] , x*LENGTH, y*HEIGHT, LENGTH, HEIGHT);
+    }
+    else {
+      ctx1.clearRect( x*LENGTH, y*HEIGHT, LENGTH, HEIGHT);
+    }
+  }
+}
+};
+
 function erase(indexX,indexY) {
   //console.log("indexX="+indexX + "," + "indexY=" + indexY);
-  ctx1.clearRect( indexX*LENGHT, indexY*HEIGHT, LENGHT, HEIGHT);
-  layersData[currentDataIndex].layerArray[indexX][indexY] = 0;
+  //ctx1.clearRect( indexX*LENGTH, indexY*HEIGHT, LENGTH, HEIGHT);
+  layersData[currentDataIndex].layerArray[indexX + (layersData[currentDataIndex].offSetX/LENGTH)][indexY + (layersData[currentDataIndex].offSetY/HEIGHT)] = 0;
+  draw();
 };
 
 function eraserAll() {
-  ctx1.clearRect( 0, 0, currentCanvas.width, currentCanvas.height);
+  //ctx1.clearRect( 0, 0, currentCanvas.width, currentCanvas.height);
   for (var i = 0; i < layersData[currentDataIndex].layerArray.length; i++) {
     for (var j = 0; j < layersData[currentDataIndex].layerArray[i].length; j++) {
       layersData[currentDataIndex].layerArray[i][j] = 0
     }
   }
+  draw();
 };
 
 function findBox(mouseX,mouseY) {
-  indexX = Math.floor(mouseX/LENGHT);
+  indexX = Math.floor(mouseX/LENGTH);
   indexY = Math.floor(mouseY/HEIGHT);
   //console.log("("+indexX+","+indexY+")")
   if(!erasing){
-    draw(indexX,indexY);
+    update(indexX,indexY);
   }
   else {
     erase(indexX,indexY);
@@ -242,15 +370,11 @@ function dataOut() {
 function displayLooker() {
   looker.style.display = "block";
   document.getElementById("eraser").style.display = "flex";
-  document.getElementById("eraserAll").style.display = "flex";
   document.getElementById("edit").style.display = "none";
-  document.getElementById("preview").style.display = "flex";
 };
 
 function hideLooker() {
   looker.style.display = "none";
   document.getElementById("edit").style.display = "flex";
   document.getElementById("eraser").style.display = "none";
-  document.getElementById("eraserAll").style.display = "none";
-  document.getElementById("preview").style.display = "none";
 };
