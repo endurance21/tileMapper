@@ -33,6 +33,7 @@ document.getElementById("Sprites").appendChild(treeLarge);
 document.getElementById("Sprites").appendChild(treeSmall);
 
 
+var preview = false;
 var currentLayer = null;
 var currentDataIndex = null;
 var currentCanvas = null;
@@ -52,6 +53,7 @@ function canvasMaker(canvasName) {
   canvas.height = 600;
   document.getElementById("canvas-container").appendChild(canvas);
   noOfCanvas++;
+  var ctx2 = canvas.getContext("2d");
 
   console.log(cols+","+rows);
 
@@ -69,6 +71,7 @@ function canvasMaker(canvasName) {
     layerArray : layerName,
     offSetX : 0,
     offSetY : 0,
+    ctx : ctx2,
   }
 
   layersData.push(data);
@@ -190,6 +193,28 @@ function moveCanvas(vertical,horizontal,moving) {
   draw();
 }
 
+function moveAllCanvas(vertical,horizontal,moving) {
+  for (var i = 0; i < noOfCanvas; i++) {
+    var prevOffSetX = layersData[i].offSetX;
+    var prevOffSetY = layersData[i].offSetY;
+    layersData[i].offSetX = layersData[i].offSetX + horizontal;
+    layersData[i].offSetY = layersData[i].offSetY + vertical;
+    var offSetXMax = (cols - 32) * 25 ;
+    var offSetYMax = (rows - 24) * 25 ;
+
+    if (layersData[i].offSetX < 0 || layersData[i].offSetX > offSetXMax) {
+      layersData[i].offSetX = prevOffSetX;
+    }
+
+    if (layersData[i].offSetY < 0 || layersData[i].offSetY > offSetYMax) {
+      layersData[i].offSetY = prevOffSetY;
+    }
+  }
+
+  drawAllCanvas();
+
+}
+
 
 function handleKeyDown(e) {
   var canvases = document.getElementsByClassName("canvases");
@@ -214,7 +239,11 @@ function handleKeyDown(e) {
             moving = true;
             break;
     }
-    moveCanvas(vertical,horizontal,moving);
+    if (preview == true) {
+    moveAllCanvas(vertical,horizontal,moving);
+    }else {
+      moveCanvas(vertical,horizontal,moving);
+    }
   }
 }
 
@@ -272,25 +301,48 @@ function draw() {
 //ctx1.drawImage( currentSprite , indexX*LENGTH, indexY*HEIGHT, LENGTH, HEIGHT);
 //  layersData[currentDataIndex].layerArray[indexX][indexY] = Sprites.indexOf(currentSprite);
 //console.log(layersData[currentDataIndex].offSetY);
-var startCol = layersData[currentDataIndex].offSetX/LENGTH;
-var startRow = layersData[currentDataIndex].offSetY/HEIGHT;
-var endCol = startCol + 32;
-var endRow = startRow + 24;
+  var startCol = layersData[currentDataIndex].offSetX/LENGTH;
+  var startRow = layersData[currentDataIndex].offSetY/HEIGHT;
+  var endCol = startCol + 32;
+  var endRow = startRow + 24;
 
-for (var i = startCol; i <= endCol; i++) {
-  for (var j = startRow; j <= endRow; j++) {
-    var x = i - (layersData[currentDataIndex].offSetX/LENGTH);
-    var y = j - (layersData[currentDataIndex].offSetY/HEIGHT);
-    if(layersData[currentDataIndex].layerArray[i][j]){
-      ctx1.clearRect( x*LENGTH, y*HEIGHT, LENGTH, HEIGHT);
-      ctx1.drawImage( Sprites[layersData[currentDataIndex].layerArray[i][j]] , x*LENGTH, y*HEIGHT, LENGTH, HEIGHT);
+  for (var i = startCol; i <= endCol; i++) {
+    for (var j = startRow; j <= endRow; j++) {
+      var x = i - (layersData[currentDataIndex].offSetX/LENGTH);
+      var y = j - (layersData[currentDataIndex].offSetY/HEIGHT);
+      if(layersData[currentDataIndex].layerArray[i][j]){
+        ctx1.clearRect( x*LENGTH, y*HEIGHT, LENGTH, HEIGHT);
+        ctx1.drawImage( Sprites[layersData[currentDataIndex].layerArray[i][j]] , x*LENGTH, y*HEIGHT, LENGTH, HEIGHT);
+      }
+      else {
+        ctx1.clearRect( x*LENGTH, y*HEIGHT, LENGTH, HEIGHT);
+      }
     }
-    else {
-      ctx1.clearRect( x*LENGTH, y*HEIGHT, LENGTH, HEIGHT);
+  }
+};
+
+function drawAllCanvas() {
+  var startCol = layersData[0].offSetX/LENGTH;
+  var startRow = layersData[0].offSetY/HEIGHT;
+  var endCol = startCol + 32;
+  var endRow = startRow + 24;
+
+  for (var k = 0; k < noOfCanvas; k++) {
+    for (var i = startCol; i <= endCol; i++) {
+      for (var j = startRow; j <= endRow; j++) {
+        var x = i - (layersData[k].offSetX/LENGTH);
+        var y = j - (layersData[k].offSetY/HEIGHT);
+        if(layersData[k].layerArray[i][j] > 0){
+          layersData[k].ctx.clearRect( x*LENGTH, y*HEIGHT, LENGTH, HEIGHT);
+          layersData[k].ctx.drawImage( Sprites[layersData[k].layerArray[i][j]] , x*LENGTH, y*HEIGHT, LENGTH, HEIGHT);
+        }
+        else {
+          layersData[k].ctx.clearRect( x*LENGTH, y*HEIGHT, LENGTH, HEIGHT);
+        }
+      }
     }
   }
 }
-};
 
 function erase(indexX,indexY) {
   //console.log("indexX="+indexX + "," + "indexY=" + indexY);
@@ -371,10 +423,17 @@ function displayLooker() {
   looker.style.display = "block";
   document.getElementById("eraser").style.display = "flex";
   document.getElementById("edit").style.display = "none";
+  preview = false;
 };
 
 function hideLooker() {
+  preview = true;
   looker.style.display = "none";
   document.getElementById("edit").style.display = "flex";
   document.getElementById("eraser").style.display = "none";
+  for (var i = 0; i < noOfCanvas; i++) {
+  layersData[i].offSetX = 0;
+  layersData[i].offSetY = 0;
+  }
+  drawAllCanvas();
 };
